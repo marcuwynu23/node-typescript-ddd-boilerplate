@@ -1,5 +1,8 @@
 # Stage 1: Build stage
-FROM node:18-alpine AS builder
+FROM node:22-alpine AS builder
+
+# Upgrade all OS packages to patch known CVEs
+RUN apk upgrade --no-cache
 
 WORKDIR /app
 
@@ -16,7 +19,13 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Production stage
-FROM node:18-alpine AS runner
+FROM node:22-alpine AS runner
+
+# Upgrade all OS packages to patch known CVEs
+# Fixes: libcrypto3/libssl3 (CVE-2025-15467, CVE-2025-69421, etc.),
+#         musl/musl-utils (CVE-2026-40200), zlib (CVE-2026-22184),
+#         busybox/ssl_client (CVE-2024-58251, CVE-2025-46394)
+RUN apk upgrade --no-cache
 
 WORKDIR /app
 
