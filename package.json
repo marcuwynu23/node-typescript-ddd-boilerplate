@@ -11,6 +11,8 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@types/dotenv": "^6.1.1",
+    "dotenv": "^17.4.2",
     "express": "^4.18.2",
     "pino": "^9.9.0",
     "pino-http": "^10.5.0",
