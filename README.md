@@ -21,20 +21,20 @@ npm start
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `npm run build` | Build with esbuild |
-| `npm run dev` | Watch mode |
-| `npm start` | Start server (port 3000) |
-| `npm test` | Run Jest tests |
+| Command         | Description              |
+| --------------- | ------------------------ |
+| `npm run build` | Build with esbuild       |
+| `npm run dev`   | Watch mode               |
+| `npm start`     | Start server (port 5000) |
+| `npm test`      | Run Jest tests           |
 
 ## Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/` | Hello message |
-| GET | `/api/health` | Health check |
-| GET | `/metrics` | Prometheus metrics |
+| Method | Endpoint      | Description        |
+| ------ | ------------- | ------------------ |
+| GET    | `/`           | Hello message      |
+| GET    | `/api/health` | Health check       |
+| GET    | `/metrics`    | Prometheus metrics |
 
 ## Logging (pino + pino-http) and Loki
 
@@ -59,7 +59,7 @@ set LOG_LEVEL=warn
 
 Below is a minimal local setup. It tails Docker container logs and pushes them to Loki.
 
-1) Create `docker-compose.observability.yml`:
+1. Create `docker-compose.observability.yml`:
 
 ```yaml
 services:
@@ -100,17 +100,17 @@ podman system service --time=0 unix:///$XDG_RUNTIME_DIR/podman/podman.sock
 Then, in `docker-compose.observability.yml`, mount the Podman socket into Promtail and update the host in `promtail-config.yml` (shown below). Example (rootful socket):
 
 ```yaml
-  promtail:
-    image: grafana/promtail:2.9.6
-    volumes:
-      - /run/podman/podman.sock:/var/run/docker.sock
-      - ./promtail-config.yml:/etc/promtail/config.yml:ro
-    command: -config.file=/etc/promtail/config.yml
-    depends_on:
-      - loki
+promtail:
+  image: grafana/promtail:2.9.6
+  volumes:
+    - /run/podman/podman.sock:/var/run/docker.sock
+    - ./promtail-config.yml:/etc/promtail/config.yml:ro
+  command: -config.file=/etc/promtail/config.yml
+  depends_on:
+    - loki
 ```
 
-2) Create `promtail-config.yml`:
+2. Create `promtail-config.yml`:
 
 ```yaml
 server:
@@ -202,7 +202,7 @@ services:
   app:
     image: express-typescript-sample:latest
     ports:
-      - "3000:3000"
+      - "5000:5000"
     volumes:
       - express-logs:/var/log/express
     command: ["sh", "-c", "node dist/index.js >> /var/log/express/app.log 2>&1"]
@@ -220,20 +220,20 @@ volumes:
   express-logs:
 ```
 
-3) Start Loki + Promtail:
+3. Start Loki + Promtail:
 
 ```bash
 docker compose -f docker-compose.observability.yml up -d
 ```
 
-4) Run this app in Docker so Promtail can read logs from Docker:
+4. Run this app in Docker so Promtail can read logs from Docker:
 
 ```bash
 docker build -t express-typescript-sample .
-docker run --rm -p 3000:3000 --name express-typescript-sample express-typescript-sample
+docker run --rm -p 5000:5000 --name express-typescript-sample express-typescript-sample
 ```
 
-5) Query logs in Grafana (see Grafana section below) using a label selector like:
+5. Query logs in Grafana (see Grafana section below) using a label selector like:
 
 - `{container="express-typescript-sample"}`
 
@@ -250,18 +250,18 @@ scrape_configs:
   - job_name: express-typescript-sample
     metrics_path: /metrics
     static_configs:
-      - targets: ["host.docker.internal:3000"]
+      - targets: ["host.docker.internal:5000"]
 ```
 
 If Prometheus is running on the host (not in Docker), you can instead use:
 
 ```yaml
-      - targets: ["localhost:3000"]
+- targets: ["localhost:5000"]
 ```
 
 ### Run Prometheus + Grafana (Docker)
 
-1) Create `docker-compose.metrics.yml`:
+1. Create `docker-compose.metrics.yml`:
 
 ```yaml
 services:
@@ -275,7 +275,7 @@ services:
   grafana:
     image: grafana/grafana:11.2.0
     ports:
-      - "3001:3000"
+      - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
@@ -283,7 +283,7 @@ services:
       - prometheus
 ```
 
-2) Create `prometheus.yml` in the repo root:
+2. Create `prometheus.yml` in the repo root:
 
 ```yaml
 global:
@@ -293,10 +293,10 @@ scrape_configs:
   - job_name: express-typescript-sample
     metrics_path: /metrics
     static_configs:
-      - targets: ["host.docker.internal:3000"]
+      - targets: ["host.docker.internal:5000"]
 ```
 
-3) Start services:
+3. Start services:
 
 ```bash
 docker compose -f docker-compose.metrics.yml up -d
@@ -304,7 +304,7 @@ docker compose -f docker-compose.metrics.yml up -d
 
 ### Add Prometheus datasource in Grafana
 
-- Open Grafana at `http://localhost:3001`
+- Open Grafana at `http://localhost:3000`
 - Login with `admin` / `admin`
 - Add datasource: **Prometheus**
   - URL: `http://prometheus:9090`
