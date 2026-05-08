@@ -1,10 +1,19 @@
-# Express + TypeScript + esbuild Sample
+# Node.js TypeScript DDD Boilerplate
 
-A minimal Express.js project with TypeScript and esbuild.
+Enterprise-ready Node.js + TypeScript boilerplate using Domain-Driven Design (DDD) and Clean Architecture.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
 [![Express](https://img.shields.io/badge/Express-4.18-green.svg)](https://expressjs.com/)
-[![esbuild](https://img.shields.io/badge/esbuild-0.19-orange.svg)](https://esbuild.github.io/)
+[![DDD](https://img.shields.io/badge/Architecture-DDD/Clean-red.svg)](https://en.wikipedia.org/wiki/Domain-driven_design)
+
+## Architecture
+
+This project follows Clean Architecture and DDD principles:
+
+- **Domain**: Business entities and logic.
+- **Application**: Use cases and orchestration.
+- **Infrastructure**: Technical details (DB, Config, Logging).
+- **Interface**: External adapters (HTTP, Controllers, Routes).
 
 ## Quick Start
 

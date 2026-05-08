@@ -1,7 +1,7 @@
 {
-  "name": "express-typescript-sample",
+  "name": "node-typescript-ddd-boilerplate",
   "version": "1.0.0",
-  "description": "Express + TypeScript sample with esbuild",
+  "description": "Enterprise-ready Node.js + TypeScript boilerplate using Domain-Driven Design (DDD) and Clean Architecture",
   "main": "dist/index.js",
   "scripts": {
     "build": "node build.js",
