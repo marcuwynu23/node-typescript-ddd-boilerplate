@@ -8,7 +8,7 @@ const buildOptions = {
   bundle: true,
   outdir: 'dist',
   platform: 'node',
-  target: 'node14',
+  target: 'node18',
   format: 'cjs',
   sourcemap: true,
   external: [],
