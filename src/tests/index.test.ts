@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { app } from './index';
+import { app } from '../index';
 
 describe('Express API', () => {
   it('returns welcome message on GET /', async () => {
