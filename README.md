@@ -1,10 +1,14 @@
-# Node.js TypeScript DDD Boilerplate
+<div align="center">
+  <h1>Node.js TypeScript DDD Boilerplate</h1>
 
-Enterprise-ready Node.js + TypeScript boilerplate using Domain-Driven Design (DDD) and Clean Architecture.
+  <p>
+    <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.3-blue.svg" alt="TypeScript"></a>
+    <a href="https://expressjs.com/"><img src="https://img.shields.io/badge/Express-4.18-green.svg" alt="Express"></a>
+    <a href="https://en.wikipedia.org/wiki/Domain-driven_design"><img src="https://img.shields.io/badge/Architecture-DDD/Clean-red.svg" alt="DDD"></a>
+  </p>
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
-[![Express](https://img.shields.io/badge/Express-4.18-green.svg)](https://expressjs.com/)
-[![DDD](https://img.shields.io/badge/Architecture-DDD/Clean-red.svg)](https://en.wikipedia.org/wiki/Domain-driven_design)
+  <p>Enterprise-ready Node.js + TypeScript boilerplate using Domain-Driven Design (DDD) and Clean Architecture.</p>
+</div>
 
 ## Architecture
 
@@ -198,7 +202,7 @@ scrape_configs:
           app:
 ```
 
-Then update `docker-compose.observability.yml` to include your app image (example uses `express-typescript-sample:latest`) and a shared log volume:
+Then update `docker-compose.observability.yml` to include your app image (example uses `node-typescript-ddd-boilerplate:latest`) and a shared log volume:
 
 ```yaml
 services:
@@ -209,7 +213,7 @@ services:
       - "3100:3100"
 
   app:
-    image: express-typescript-sample:latest
+    image: node-typescript-ddd-boilerplate:latest
     ports:
       - "5000:5000"
     volumes:
@@ -238,13 +242,13 @@ docker compose -f docker-compose.observability.yml up -d
 4. Run this app in Docker so Promtail can read logs from Docker:
 
 ```bash
-docker build -t express-typescript-sample .
-docker run --rm -p 5000:5000 --name express-typescript-sample express-typescript-sample
+docker build -t node-typescript-ddd-boilerplate .
+docker run --rm -p 5000:5000 --name node-typescript-ddd-boilerplate node-typescript-ddd-boilerplate
 ```
 
 5. Query logs in Grafana (see Grafana section below) using a label selector like:
 
-- `{container="express-typescript-sample"}`
+- `{container="node-typescript-ddd-boilerplate"}`
 
 ## Metrics (Prometheus) and Grafana
 
@@ -256,7 +260,7 @@ Add this to your `prometheus.yml`:
 
 ```yaml
 scrape_configs:
-  - job_name: express-typescript-sample
+  - job_name: node-typescript-ddd-boilerplate
     metrics_path: /metrics
     static_configs:
       - targets: ["host.docker.internal:5000"]
@@ -299,7 +303,7 @@ global:
   scrape_interval: 5s
 
 scrape_configs:
-  - job_name: express-typescript-sample
+  - job_name: node-typescript-ddd-boilerplate
     metrics_path: /metrics
     static_configs:
       - targets: ["host.docker.internal:5000"]
@@ -327,13 +331,12 @@ docker compose -f docker-compose.metrics.yml up -d
 
 ## Project Structure
 
-```
-express-typescript-sample/
-├── src/
-│   └── index.ts       # Express app entry point
-├── dist/               # Compiled output
-├── build.js            # esbuild configuration
-├── tsconfig.json       # TypeScript configuration
-├── package.json        # Dependencies
-└── README.md           # This file
+```text
+src/
+├── domain/            # Entities, Value Objects, Domain Logic
+├── application/       # Use Cases, Application Services
+├── infrastructure/    # Config, Tracing, Logging, Database
+├── interface/         # HTTP Controllers, Routes, Middlewares
+├── tests/             # Integration and Unit Tests
+└── index.ts           # Entry point
 ```
