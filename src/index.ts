@@ -2,12 +2,11 @@ import './config/config';
 import './tracer/tracer';
 import { trace } from '@opentelemetry/api';
 import express, { type Request, type Response } from 'express';
+import { config } from './config/config';
 import { httpLogger } from './middlewares/httpLogger';
 import { metricsHandler, metricsMiddleware } from './middlewares/metrics';
 
 const app = express();
-const port = process.env.PORT || 5000;
-const host = process.env.HOST || '0.0.0.0';
 
 app.use(httpLogger);
 app.use(metricsMiddleware);
@@ -25,8 +24,8 @@ app.get('/api/health', (_req: Request, res: Response) => {
 });
 
 if (require.main === module) {
-  app.listen(Number(port), host, () => {
-    console.log(`Server running on http://${host}:${port}`);
+  app.listen(config.port, config.host, () => {
+    console.log(`Server running on http://${config.host}:${config.port}`);
   });
 }
 

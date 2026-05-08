@@ -1,10 +1,10 @@
-import '../config/config';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 import { NodeSDK } from '@opentelemetry/sdk-node';
+import { config } from '../config/config';
 
 const exporter = new OTLPTraceExporter({
-  url: process.env.OPENTELEMETRY_URL || 'http://localhost:4317',
+  url: config.opentelemetryUrl,
 });
 
 const sdk = new NodeSDK({

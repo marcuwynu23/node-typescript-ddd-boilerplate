@@ -1,17 +1,12 @@
-import '../config/config';
 import pino from 'pino';
+import { config } from '../config/config';
 
 export function createLogger() {
-  const level = process.env.LOG_LEVEL ?? (process.env.NODE_ENV === 'test' ? 'silent' : 'info');
-
-  const isProduction = process.env.NODE_ENV === 'production';
-  const isTest = process.env.NODE_ENV === 'test';
-
   return pino({
-    level,
+    level: config.logLevel,
     base: undefined,
     timestamp: pino.stdTimeFunctions.isoTime,
-    ...(isProduction || isTest
+    ...(config.isProduction || config.isTest
       ? {}
       : {
           transport: {
