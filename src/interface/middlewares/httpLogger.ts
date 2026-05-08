@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import pinoHttp from 'pino-http';
-import { createLogger } from '../observability/logger';
+import { createLogger } from '../../infrastructure/observability/logger';
 
 const logger = createLogger();
 
