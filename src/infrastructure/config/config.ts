@@ -18,6 +18,7 @@ export const config = {
   opentelemetryUrl: process.env.OPENTELEMETRY_URL ?? 'http://localhost:4317',
   scalarEnabled: process.env.SCALAR_ENABLED === 'true',
   openAPISpecPath: process.env.OPEN_API_SPEC_PATH ?? '.',
+  mongoUri: process.env.MONGO_URI ?? 'mongodb://localhost:27017/greetings',
 } as const;
 
 // Print only config variables
