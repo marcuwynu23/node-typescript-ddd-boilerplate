@@ -14,8 +14,8 @@ async function bootstrap() {
   )?.address;
   const ipv6 = interfaces.find((i) => i && i.family === 'IPv6' && !i.internal)?.address;
 
-  app.listen(config.port, config.host, () => {
-    console.log(`http://${config.host}:${config.port}`);
+  app.listen(config.port, '::', () => {
+    console.log(`http://[::]:${config.port}`);
     console.log(`http://localhost:${config.port}`);
     if (ipv4) console.log(`http://${ipv4}:${config.port}`);
     if (ipv6) console.log(`http://[${ipv6}]:${config.port}`);
