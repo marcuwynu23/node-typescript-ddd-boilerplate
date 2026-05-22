@@ -16,6 +16,12 @@ export const config = {
   port: Number(process.env.PORT ?? 5000),
   logLevel: process.env.LOG_LEVEL ?? (isTest ? 'silent' : 'info'),
   opentelemetryUrl: process.env.OPENTELEMETRY_URL ?? 'http://localhost:4317',
+  scalarEnabled: process.env.SCALAR_ENABLED === 'true',
+  openAPISpecPath: process.env.OPEN_API_SPEC_PATH ?? '.',
 } as const;
+
+// Print only config variables
+console.log('\n=== Configuration Variables ===');
+console.table(config);
 
 export type Config = typeof config;
