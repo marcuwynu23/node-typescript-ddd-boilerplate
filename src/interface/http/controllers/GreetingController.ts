@@ -21,7 +21,7 @@ export class GreetingController {
     try {
       const greetings = await this.getGreetingUseCase.executeAll();
       res.json(greetings);
-    } catch (error) {
+    } catch (_error) {
       res.status(500).json({ error: 'Failed to fetch greetings' });
     }
   };
@@ -34,7 +34,7 @@ export class GreetingController {
         return;
       }
       res.json(greeting);
-    } catch (error) {
+    } catch (_error) {
       res.status(500).json({ error: 'Failed to fetch greeting' });
     }
   };
@@ -48,7 +48,7 @@ export class GreetingController {
       }
       const greeting = await this.createGreetingUseCase.execute(message);
       res.status(201).json(greeting);
-    } catch (error) {
+    } catch (_error) {
       res.status(500).json({ error: 'Failed to create greeting' });
     }
   };
@@ -66,7 +66,7 @@ export class GreetingController {
         return;
       }
       res.json(greeting);
-    } catch (error) {
+    } catch (_error) {
       res.status(500).json({ error: 'Failed to update greeting' });
     }
   };
@@ -79,7 +79,7 @@ export class GreetingController {
         return;
       }
       res.status(204).send();
-    } catch (error) {
+    } catch (_error) {
       res.status(500).json({ error: 'Failed to delete greeting' });
     }
   };

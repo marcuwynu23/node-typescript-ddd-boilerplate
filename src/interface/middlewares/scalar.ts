@@ -1,7 +1,7 @@
+import path from 'node:path';
 import { apiReference } from '@scalar/express-api-reference';
 import type { Application } from 'express';
 import helmet from 'helmet';
-import path from 'path';
 import { config } from '../../infrastructure/config/config';
 
 function getOpenAPIPath(): string {
