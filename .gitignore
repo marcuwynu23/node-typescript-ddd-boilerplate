@@ -18,6 +18,9 @@ build/
 .env.production.local
 !.env.example
 
+# secrets
+.secrets
+!.secrets.example
 # IDE and editor files
 .vscode/
 .idea/
