@@ -18,6 +18,7 @@ async function bootstrap() {
     console.log(`http://[::]:${config.port}`);
     console.log(`http://localhost:${config.port}`);
     if (ipv4) console.log(`http://${ipv4}:${config.port}`);
+    console.log(`http://[::1]:${config.port}`);
     if (ipv6) console.log(`http://[${ipv6}]:${config.port}`);
   });
 }
