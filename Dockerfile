@@ -32,7 +32,9 @@ FROM base AS production
 ENV NODE_ENV=production
 COPY package*.json ./
 RUN npm ci --omit=dev --ignore-scripts && \
-    chown -R node:node /app
+    chown -R node:node /app && \
+    npm cache clean --force && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 COPY --from=builder --chown=node:node /app/dist ./dist
 USER node
 EXPOSE 5000
