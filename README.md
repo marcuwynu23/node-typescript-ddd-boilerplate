@@ -4,6 +4,7 @@
   <p>
     <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.3-blue.svg" alt="TypeScript"></a>
     <a href="https://expressjs.com/"><img src="https://img.shields.io/badge/Express-4.18-green.svg" alt="Express"></a>
+    <a href="https://mongoosejs.com/"><img src="https://img.shields.io/badge/Mongoose-8.x-darkgreen.svg" alt="Mongoose"></a>
     <a href="https://en.wikipedia.org/wiki/Domain-driven_design"><img src="https://img.shields.io/badge/Architecture-DDD/Clean-red.svg" alt="DDD"></a>
   </p>
 
@@ -14,16 +15,22 @@
 
 This project follows Clean Architecture and DDD principles:
 
-- **Domain**: Business entities and logic.
+- **Domain**: Business entities, value objects, and repository interfaces (ports).
 - **Application**: Use cases and orchestration.
-- **Infrastructure**: Technical details (DB, Config, Logging).
-- **Interface**: External adapters (HTTP, Controllers, Routes).
+- **Infrastructure**: Technical details (MongoDB/Mongoose, Config, Logging, Tracing).
+- **Interface**: External adapters (HTTP Controllers, Routes, Middlewares).
 
 ## Quick Start
 
 ```bash
 # Install dependencies
 npm install
+
+# Set up environment
+cp .env.example .env
+
+# Start MongoDB (Docker)
+docker run -d -p 27017:27017 --name mongo mongo:8
 
 # Build
 npm run build
@@ -34,20 +41,129 @@ npm start
 
 ## Commands
 
-| Command         | Description              |
-| --------------- | ------------------------ |
-| `npm run build` | Build with esbuild       |
-| `npm run dev`   | Watch mode               |
-| `npm start`     | Start server (port 5000) |
-| `npm test`      | Run Jest tests           |
+| Command            | Description              |
+| ------------------ | ------------------------ |
+| `npm run build`    | Build with esbuild       |
+| `npm run dev`      | Watch mode (nodemon)     |
+| `npm start`        | Start server (port 5000) |
+| `npm test`         | Run Jest tests           |
+| `npm run lint`     | Lint with Biome          |
+| `npm run lint:fix` | Auto-fix lint issues     |
+| `npm run check`    | Biome check (all)        |
+
+## Environment Variables
+
+| Variable             | Default                               | Description                    |
+| -------------------- | ------------------------------------- | ------------------------------ |
+| `NODE_ENV`           | `development`                         | Environment mode               |
+| `PORT`               | `5000`                                | Server port                    |
+| `HOST`               | `0.0.0.0`                             | Server host                    |
+| `LOG_LEVEL`          | `info`                                | Pino log level                 |
+| `MONGO_URI`          | `mongodb://localhost:27017/greetings` | MongoDB connection string      |
+| `OPENTELEMETRY_URL`  | `http://localhost:4317`               | OTLP gRPC endpoint             |
+| `SCALAR_ENABLED`     | `true`                                | Enable API docs at `/docs`     |
+| `OPEN_API_SPEC_PATH` | `./openapi`                           | Path to OpenAPI spec directory |
 
 ## Endpoints
 
-| Method | Endpoint      | Description        |
-| ------ | ------------- | ------------------ |
-| GET    | `/`           | Hello message      |
-| GET    | `/api/health` | Health check       |
-| GET    | `/metrics`    | Prometheus metrics |
+| Method | Route                | Description          |
+| ------ | -------------------- | -------------------- |
+| GET    | `/`                  | Hello message        |
+| GET    | `/api/greetings`     | List all greetings   |
+| GET    | `/api/greetings/:id` | Get greeting by ID   |
+| POST   | `/api/greetings`     | Create greeting      |
+| PUT    | `/api/greetings/:id` | Update greeting      |
+| DELETE | `/api/greetings/:id` | Delete greeting      |
+| GET    | `/health`            | Health check         |
+| GET    | `/ready`             | Readiness check      |
+| GET    | `/metrics`           | Prometheus metrics   |
+| GET    | `/docs`              | Scalar API reference |
+| GET    | `/openapi.yaml`      | Raw OpenAPI spec     |
+
+### CRUD Example
+
+```bash
+# Create
+curl -X POST http://localhost:5000/api/greetings \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Hello World"}'
+
+# List all
+curl http://localhost:5000/api/greetings
+
+# Get by ID
+curl http://localhost:5000/api/greetings/<id>
+
+# Update
+curl -X PUT http://localhost:5000/api/greetings/<id> \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Updated greeting"}'
+
+# Delete
+curl -X DELETE http://localhost:5000/api/greetings/<id>
+```
+
+## API Documentation (Scalar)
+
+When `SCALAR_ENABLED=true`, interactive API docs are served at `/docs` powered by [Scalar](https://scalar.com/). The OpenAPI spec is available at `/openapi.yaml`.
+
+## Database (MongoDB + Mongoose)
+
+The app uses Mongoose with a repository pattern:
+
+- **Domain layer** defines the `GreetingRepository` interface (port)
+- **Infrastructure layer** implements it with `MongoGreetingRepository` (adapter)
+- Connection is established on startup via `MONGO_URI`
+
+### Running MongoDB locally
+
+```bash
+# Docker
+docker run -d -p 27017:27017 --name mongo mongo:8
+
+# Or use Docker Compose (see below)
+```
+
+## Docker
+
+The Dockerfile is multi-stage and hardened for production:
+
+- **Alpine base** with security patches
+- **Non-root user** (`node`)
+- **dumb-init** for proper PID 1 signal handling
+- **npm removed** from production image (reduces attack surface)
+- **HEALTHCHECK** built in
+
+```bash
+# Build
+docker build -t node-typescript-ddd-boilerplate .
+
+# Run (production)
+docker run --rm -p 5000:5000 \
+  -e MONGO_URI=mongodb://host.docker.internal:27017/greetings \
+  node-typescript-ddd-boilerplate
+
+# Run (development)
+docker build --target development -t node-typescript-ddd-boilerplate:dev .
+docker run --rm -p 5000:5000 -v $(pwd):/app \
+  node-typescript-ddd-boilerplate:dev
+```
+
+## CI/CD (GitHub Actions)
+
+Two workflows in `.github/workflows/`:
+
+- **test.yml** — runs lint and tests on PRs
+- **release.yml** — builds, tests, pushes to GHCR, and runs Snyk security scans
+
+### Snyk Integration
+
+The release workflow includes:
+
+- `snyk/actions/node` — scans npm dependencies for vulnerabilities
+- `snyk/actions/docker` — scans the Docker image for OS and app CVEs
+
+Requires a `SNYK_TOKEN` repository secret (Snyk PAT from [app.snyk.io](https://app.snyk.io) → Account Settings → Auth Token).
 
 ## Logging (pino + pino-http) and Loki
 
@@ -95,12 +211,12 @@ services:
 
 ### Podman notes (instead of Docker Engine)
 
-Promtail’s `docker_sd_configs` can also work with **Podman** if you expose Podman’s Docker-compatible API socket.
+Promtail's `docker_sd_configs` can also work with **Podman** if you expose Podman's Docker-compatible API socket.
 
 - **Rootful Podman socket**: `unix:///run/podman/podman.sock`
 - **Rootless Podman socket** (common): `unix:///$XDG_RUNTIME_DIR/podman/podman.sock`
 
-If the socket isn’t running, start it (examples):
+If the socket isn't running, start it (examples):
 
 ```bash
 # rootful Linux
@@ -160,7 +276,7 @@ scrape_configs:
 
 ### Alternative: tail application log files (no Docker/Podman service discovery)
 
-If you **don’t** want `docker_sd_configs`, you can have Promtail tail plain log files using `static_configs` + `__path__`.
+If you **don't** want `docker_sd_configs`, you can have Promtail tail plain log files using `static_configs` + `__path__`.
 
 This requires your app container to **write logs to a file** (not just stdout). The easiest approach is:
 
@@ -333,10 +449,31 @@ docker compose -f docker-compose.metrics.yml up -d
 
 ```text
 src/
-├── domain/            # Entities, Value Objects, Domain Logic
-├── application/       # Use Cases, Application Services
-├── infrastructure/    # Config, Tracing, Logging, Database
-├── interface/         # HTTP Controllers, Routes, Middlewares
-├── tests/             # Integration and Unit Tests
-└── index.ts           # Entry point
+├── domain/
+│   ├── entities/          # Greeting entity
+│   └── repositories/      # Repository interfaces (ports)
+├── application/
+│   └── use-cases/         # GetGreeting, CreateGreeting, UpdateGreeting, DeleteGreeting
+├── infrastructure/
+│   ├── config/            # Environment config
+│   ├── database/          # Mongoose connection, models, repository implementations
+│   ├── observability/     # Pino logger
+│   └── tracer/            # OpenTelemetry tracing
+├── interface/
+│   ├── http/
+│   │   ├── controllers/   # GreetingController, HealthController, DocsAPIController
+│   │   └── routes/        # Express router
+│   └── middlewares/       # httpLogger, metrics, scalar
+├── tests/
+│   ├── domain/            # Entity unit tests
+│   ├── application/       # Use case unit tests
+│   └── interface/         # Controller unit tests
+└── index.ts               # Entry point
 ```
+
+## Security
+
+- Hardened Dockerfile (non-root, dumb-init, npm removed in production)
+- Helmet middleware with CSP for API docs
+- Snyk scanning in CI (dependencies + Docker image)
+- Input validation on all CRUD endpoints
