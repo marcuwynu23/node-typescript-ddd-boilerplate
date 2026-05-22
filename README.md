@@ -20,6 +20,112 @@ This project follows Clean Architecture and DDD principles:
 - **Infrastructure**: Technical details (MongoDB/Mongoose, Config, Logging, Tracing).
 - **Interface**: External adapters (HTTP Controllers, Routes, Middlewares).
 
+### Layer Overview
+
+Each layer has a distinct responsibility. The diagram below shows how they relate and where dependencies flow.
+
+```mermaid
+graph TD
+    subgraph Interface Layer
+        HTTP[HTTP Request]
+        Routes[Routes]
+        Controllers[Controllers]
+        Middlewares[Middlewares]
+    end
+
+    subgraph Application Layer
+        UC[Use Cases]
+    end
+
+    subgraph Domain Layer
+        Entities[Entities]
+        RepoInterface[Repository Interfaces]
+    end
+
+    subgraph Infrastructure Layer
+        DB[(MongoDB)]
+        MongoRepo[MongoRepository]
+        Config[Config]
+        Logger[Logger]
+        Tracer[Tracer]
+    end
+
+    HTTP --> Middlewares --> Routes --> Controllers
+    Controllers --> UC
+    UC --> RepoInterface
+    RepoInterface -.->|implements| MongoRepo
+    MongoRepo --> DB
+    Controllers -.-> Config
+    Controllers -.-> Logger
+```
+
+### Request Flow
+
+A single HTTP request travels through all layers from left to right. The interface receives it, the application orchestrates it, and the infrastructure persists it.
+
+```mermaid
+flowchart LR
+    subgraph Request Flow
+        A[Client] -->|HTTP| B[Express Router]
+        B --> C[Controller]
+        C --> D[Use Case]
+        D --> E[Repository Interface]
+        E --> F[Mongo Repository]
+        F --> G[(MongoDB)]
+    end
+```
+
+### Dependency Rule
+
+Dependencies point **inward** — outer layers depend on inner layers, never the reverse. The infrastructure layer implements domain interfaces (ports) without the domain knowing about it.
+
+```mermaid
+graph LR
+    Interface --> Application --> Domain
+    Infrastructure -.->|implements| Domain
+```
+
+### How DDD Works in This Project
+
+The sequence below traces a `POST /api/greetings` request through every layer, showing how the controller validates input, the use case creates a domain entity, and the repository persists it — all without any layer knowing the implementation details of the layers below it.
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Router
+    participant Controller
+    participant UseCase
+    participant RepoInterface
+    participant MongoRepo
+    participant MongoDB
+
+    Client->>Router: POST /api/greetings
+    Router->>Controller: create(req, res)
+    Controller->>Controller: Validate input
+    Controller->>UseCase: execute("Hello World")
+    UseCase->>UseCase: Greeting.create(message)
+    UseCase->>RepoInterface: create(greeting)
+    RepoInterface->>MongoRepo: create(greeting)
+    MongoRepo->>MongoDB: GreetingModel.create()
+    MongoDB-->>MongoRepo: Document
+    MongoRepo-->>RepoInterface: Greeting entity
+    RepoInterface-->>UseCase: Greeting entity
+    UseCase-->>Controller: Greeting entity
+    Controller-->>Client: 201 JSON response
+```
+
+**Key DDD concepts applied:**
+
+| Concept                  | Implementation                           | Purpose                                               |
+| ------------------------ | ---------------------------------------- | ----------------------------------------------------- |
+| **Entity**               | `Greeting` class                         | Business object with identity and behavior            |
+| **Repository (Port)**    | `GreetingRepository` interface           | Abstract contract — domain doesn't know about MongoDB |
+| **Repository (Adapter)** | `MongoGreetingRepository`                | Concrete implementation using Mongoose                |
+| **Use Case**             | `CreateGreeting`, `GetGreeting`, etc.    | Single-responsibility application logic               |
+| **Dependency Inversion** | Use cases depend on interface, not Mongo | Swap databases without touching domain/application    |
+
+The domain layer has **zero dependencies** on frameworks or databases. If you replace MongoDB with PostgreSQL tomorrow, only the infrastructure layer changes — domain and application layers remain untouched.
+
 ## Quick Start
 
 ```bash
@@ -444,32 +550,6 @@ docker compose -f docker-compose.metrics.yml up -d
   - `sum(rate(http_requests_total[1m])) by (route, status_code)`
 - **Latency (p95)**:
   - `histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, route))`
-
-## Project Structure
-
-```text
-src/
-├── domain/
-│   ├── entities/          # Greeting entity
-│   └── repositories/      # Repository interfaces (ports)
-├── application/
-│   └── use-cases/         # GetGreeting, CreateGreeting, UpdateGreeting, DeleteGreeting
-├── infrastructure/
-│   ├── config/            # Environment config
-│   ├── database/          # Mongoose connection, models, repository implementations
-│   ├── observability/     # Pino logger
-│   └── tracer/            # OpenTelemetry tracing
-├── interface/
-│   ├── http/
-│   │   ├── controllers/   # GreetingController, HealthController, DocsAPIController
-│   │   └── routes/        # Express router
-│   └── middlewares/       # httpLogger, metrics, scalar
-├── tests/
-│   ├── domain/            # Entity unit tests
-│   ├── application/       # Use case unit tests
-│   └── interface/         # Controller unit tests
-└── index.ts               # Entry point
-```
 
 ## Security
 
